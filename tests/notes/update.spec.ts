@@ -1,16 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, APIRequestContext } from "@playwright/test";
 import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
+import { RequestManager } from "../../framework/core/requestManager";
 
 const BASE_URL = env.notesUrl;
-
-let createdNoteId = "";
-
 const token = getToken();
 
-test.beforeAll(async ({ request }) => {
-  const create = await request.post(`${BASE_URL}${endpoints.notes}`, {
+let client: APIRequestContext;
+let createdNoteId = "";
+
+test.beforeAll(async () => {
+  const manager = await RequestManager.getInstance();
+  client = manager.client;
+
+  const create = await client.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "Original Title",
@@ -23,14 +27,14 @@ test.beforeAll(async ({ request }) => {
   createdNoteId = noteJson.data.id;
 });
 
-test.afterAll(async ({ request }) => {
-  await request.delete(`${BASE_URL}${endpoints.noteById(createdNoteId)}`, {
+test.afterAll(async () => {
+  await client.delete(`${BASE_URL}${endpoints.noteById(createdNoteId)}`, {
     headers: { "x-auth-token": token },
   });
 });
 
-test("should update a note successfully", async ({ request }) => {
-  const response = await request.put(
+test("should update a note successfully", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -52,10 +56,8 @@ test("should update a note successfully", async ({ request }) => {
   expect(json.data.title).toBe("Updated Title");
 });
 
-test("should fail when updating a note with missing title", async ({
-  request,
-}) => {
-  const response = await request.put(
+test("should fail when updating a note with missing title", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -72,10 +74,8 @@ test("should fail when updating a note with missing title", async ({
   expect(json.message).toContain("Title must be between");
 });
 
-test("should fail when updating a note with missing description", async ({
-  request,
-}) => {
-  const response = await request.put(
+test("should fail when updating a note with missing description", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -92,10 +92,8 @@ test("should fail when updating a note with missing description", async ({
   expect(json.message).toContain("Description must be between");
 });
 
-test("should fail when updating a note with missing category", async ({
-  request,
-}) => {
-  const response = await request.put(
+test("should fail when updating a note with missing category", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -114,10 +112,8 @@ test("should fail when updating a note with missing category", async ({
   );
 });
 
-test("should fail when updating a note with invalid category", async ({
-  request,
-}) => {
-  const response = await request.put(
+test("should fail when updating a note with invalid category", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -137,8 +133,8 @@ test("should fail when updating a note with invalid category", async ({
   );
 });
 
-test("should fail when updating a note without token", async ({ request }) => {
-  const response = await request.put(
+test("should fail when updating a note without token", async () => {
+  const response = await client.put(
     `${BASE_URL}${endpoints.noteById(createdNoteId)}`,
     {
       data: {

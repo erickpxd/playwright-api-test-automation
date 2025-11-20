@@ -1,15 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, APIRequestContext } from "@playwright/test";
 import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
+import { RequestManager } from "../../framework/core/requestManager";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
+let client: APIRequestContext;
 let testNoteId = "";
 
-test.beforeAll(async ({ request }) => {
-  const create = await request.post(`${BASE_URL}${endpoints.notes}`, {
+test.beforeAll(async () => {
+  const manager = await RequestManager.getInstance();
+  client = manager.client;
+
+  const create = await client.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "Note to be deleted",
@@ -22,16 +27,16 @@ test.beforeAll(async ({ request }) => {
   testNoteId = json.data.id;
 });
 
-test.afterAll(async ({ request }) => {
+test.afterAll(async () => {
   if (testNoteId) {
-    await request.delete(`${BASE_URL}${endpoints.noteById(testNoteId)}`, {
+    await client.delete(`${BASE_URL}${endpoints.noteById(testNoteId)}`, {
       headers: { "x-auth-token": token },
     });
   }
 });
 
-test("should fail to delete a note without token", async ({ request }) => {
-  const res = await request.delete(
+test("should fail to delete a note without token", async () => {
+  const res = await client.delete(
     `${BASE_URL}${endpoints.noteById(testNoteId)}`
   );
 
@@ -42,8 +47,8 @@ test("should fail to delete a note without token", async ({ request }) => {
   expect(json.message).toContain("No authentication token");
 });
 
-test("should delete a note successfully", async ({ request }) => {
-  const res = await request.delete(
+test("should delete a note successfully", async () => {
+  const res = await client.delete(
     `${BASE_URL}${endpoints.noteById(testNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -59,10 +64,13 @@ test("should delete a note successfully", async ({ request }) => {
   testNoteId = "";
 });
 
-test("should fail to delete a note with invalid ID", async ({ request }) => {
-  const res = await request.delete(`${BASE_URL}${endpoints.noteById("invalid-id")}`, {
-    headers: { "x-auth-token": token },
-  });
+test("should fail to delete a note with invalid ID", async () => {
+  const res = await client.delete(
+    `${BASE_URL}${endpoints.noteById("invalid-id")}`,
+    {
+      headers: { "x-auth-token": token },
+    }
+  );
 
   expect([400, 404]).toContain(res.status());
 

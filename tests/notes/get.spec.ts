@@ -1,13 +1,21 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, APIRequestContext } from "@playwright/test";
 import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
+import { RequestManager } from "../../framework/core/requestManager";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
-test("should list all notes successfully", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}${endpoints.notes}`, {
+let client: APIRequestContext;
+
+test.beforeAll(async () => {
+  const manager = await RequestManager.getInstance();
+  client = manager.client;
+});
+
+test("should list all notes successfully", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
   });
 
@@ -32,8 +40,8 @@ test("should list all notes successfully", async ({ request }) => {
   }
 });
 
-test("should fail to list notes without token", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}${endpoints.notes}`);
+test("should fail to list notes without token", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.notes}`);
 
   expect(res.status()).toBe(401);
 
@@ -41,8 +49,8 @@ test("should fail to list notes without token", async ({ request }) => {
   expect(json.success).toBe(false);
 });
 
-test("should fail to list notes with invalid token", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}${endpoints.notes}`, {
+test("should fail to list notes with invalid token", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": "123.invalid.token.456" },
   });
 

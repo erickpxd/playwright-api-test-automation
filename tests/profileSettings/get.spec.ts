@@ -1,15 +1,21 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, APIRequestContext } from "@playwright/test";
 import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
+import { RequestManager } from "../../framework/core/requestManager";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
-test("Should return, user profile information retrieved successfully.", async ({
-  request,
-}) => {
-  const res = await request.get(`${BASE_URL}${endpoints.profile}`, {
+let client: APIRequestContext;
+
+test.beforeAll(async () => {
+  const manager = await RequestManager.getInstance();
+  client = manager.client;
+});
+
+test("Should return, user profile information retrieved successfully.", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.profile}`, {
     headers: { "x-auth-token": token },
   });
 
@@ -31,10 +37,8 @@ test("Should return, user profile information retrieved successfully.", async ({
   expect(typeof json.data.email).toBe("string");
 });
 
-test("Should return 401 Unauthorized when token is malformed", async ({
-  request,
-}) => {
-  const res = await request.get(`${BASE_URL}${endpoints.profile}`, {
+test("Should return 401 Unauthorized when token is malformed", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.profile}`, {
     headers: {
       "x-auth-token": "123-invalid-token",
     },
@@ -50,10 +54,8 @@ test("Should return 401 Unauthorized when token is malformed", async ({
   );
 });
 
-test("Should return 401 Unauthorized when no token is provided", async ({
-  request,
-}) => {
-  const res = await request.get(`${BASE_URL}${endpoints.profile}`);
+test("Should return 401 Unauthorized when no token is provided", async () => {
+  const res = await client.get(`${BASE_URL}${endpoints.profile}`);
 
   const json = await res.json();
 

@@ -1,19 +1,27 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, APIRequestContext } from "@playwright/test";
 import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
+import { RequestManager } from "../../framework/core/requestManager";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
-test("Should update user profile successfully (200)", async ({ request }) => {
+let client: APIRequestContext;
+
+test.beforeAll(async () => {
+  const manager = await RequestManager.getInstance();
+  client = manager.client;
+});
+
+test("Should update user profile successfully (200)", async () => {
   const payload = {
     name: "Updated User Teste",
     phone: "9876543210",
     company: "QA3 Company",
   };
 
-  const res = await request.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
+  const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     headers: { "x-auth-token": token },
     form: payload,
   });
@@ -36,10 +44,8 @@ test("Should update user profile successfully (200)", async ({ request }) => {
   expect(json.data.company).toBe(payload.company);
 });
 
-test("Should return 400 Bad Request when invalid data is sent", async ({
-  request,
-}) => {
-  const res = await request.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
+test("Should return 400 Bad Request when invalid data is sent", async () => {
+  const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     headers: { "x-auth-token": token },
     form: {
       name: "",
@@ -58,10 +64,8 @@ test("Should return 400 Bad Request when invalid data is sent", async ({
   expect(json.message.length).toBeGreaterThan(0);
 });
 
-test("Should return 401 Unauthorized when no token is provided", async ({
-  request,
-}) => {
-  const res = await request.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
+test("Should return 401 Unauthorized when no token is provided", async () => {
+  const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     form: {
       name: "User",
       phone: "9999999999",
