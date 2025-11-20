@@ -1,13 +1,14 @@
 import fs from "fs";
+import { env } from "./config/environment";
 
 async function globalSetup() {
-  const res = await fetch(`${process.env.NOTES_URL}/users/login`, {
+  const res = await fetch(`${env.notesUrl}/users/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      email: process.env.TEST_EMAIL,
-      password: process.env.TEST_PASSWORD
-    })
+      email: env.testEmail,
+      password: env.testPassword,
+    }),
   });
 
   const json = await res.json();

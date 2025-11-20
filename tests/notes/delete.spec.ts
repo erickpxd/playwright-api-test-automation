@@ -1,13 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { getToken } from "../../utils/auth";
+import { getToken } from "../../framework/helpers/authHelper";
+import { env } from "../../config/environment";
+import { endpoints } from "../../config/endpoints";
 
-const BASE_URL = process.env.NOTES_URL;
+const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let testNoteId = "";
 
 test.beforeAll(async ({ request }) => {
-  const create = await request.post(`${BASE_URL}/notes`, {
+  const create = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "Note to be deleted",
@@ -20,17 +22,18 @@ test.beforeAll(async ({ request }) => {
   testNoteId = json.data.id;
 });
 
-
 test.afterAll(async ({ request }) => {
   if (testNoteId) {
-    await request.delete(`${BASE_URL}/notes/${testNoteId}`, {
+    await request.delete(`${BASE_URL}${endpoints.noteById(testNoteId)}`, {
       headers: { "x-auth-token": token },
     });
   }
 });
 
 test("should fail to delete a note without token", async ({ request }) => {
-  const res = await request.delete(`${BASE_URL}/notes/${testNoteId}`);
+  const res = await request.delete(
+    `${BASE_URL}${endpoints.noteById(testNoteId)}`
+  );
 
   expect(res.status()).toBe(401);
 
@@ -40,9 +43,12 @@ test("should fail to delete a note without token", async ({ request }) => {
 });
 
 test("should delete a note successfully", async ({ request }) => {
-  const res = await request.delete(`${BASE_URL}/notes/${testNoteId}`, {
-    headers: { "x-auth-token": token },
-  });
+  const res = await request.delete(
+    `${BASE_URL}${endpoints.noteById(testNoteId)}`,
+    {
+      headers: { "x-auth-token": token },
+    }
+  );
 
   expect(res.status()).toBe(200);
 
@@ -54,7 +60,7 @@ test("should delete a note successfully", async ({ request }) => {
 });
 
 test("should fail to delete a note with invalid ID", async ({ request }) => {
-  const res = await request.delete(`${BASE_URL}/notes/invalid-id`, {
+  const res = await request.delete(`${BASE_URL}${endpoints.noteById("invalid-id")}`, {
     headers: { "x-auth-token": token },
   });
 

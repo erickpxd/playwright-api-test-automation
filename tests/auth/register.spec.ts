@@ -1,6 +1,9 @@
 import { test, expect, APIRequestContext } from "@playwright/test";
+import { env } from "../../config/environment";
+import { endpoints } from "../../config/endpoints";
 
-const BASE_URL = process.env.NOTES_URL;
+const BASE_URL = env.notesUrl;
+const password = env.testPassword;
 
 let disposableEmail = "";
 let disposableToken = "";
@@ -8,18 +11,18 @@ let disposableToken = "";
 test.beforeAll(async ({ request }) => {
   disposableEmail = `discard_${Date.now()}@test.com`;
 
-  await request.post(`${BASE_URL}/users/register`, {
+  await request.post(`${BASE_URL}${endpoints.register}`, {
     data: {
       name: "Disposable",
       email: disposableEmail,
-      password: "123321",
+      password,
     },
   });
 
-  const login = await request.post(`${BASE_URL}/users/login`, {
+  const login = await request.post(`${BASE_URL}${endpoints.login}`, {
     data: {
       email: disposableEmail,
-      password: "123321",
+      password,
     },
   });
 
@@ -28,13 +31,13 @@ test.beforeAll(async ({ request }) => {
 });
 
 test.afterAll(async ({ request }) => {
-  await request.delete(`${BASE_URL}/users/delete-account`, {
+  await request.delete(`${BASE_URL}${endpoints.deleteAccount}`, {
     headers: { "x-auth-token": disposableToken },
   });
 });
 
 async function deleteUser(request: APIRequestContext, token: string) {
-  await request.delete(`${BASE_URL}/users/delete-account`, {
+  await request.delete(`${BASE_URL}${endpoints.deleteAccount}`, {
     headers: { "x-auth-token": token },
   });
 }
@@ -42,11 +45,11 @@ async function deleteUser(request: APIRequestContext, token: string) {
 test("should register a new user successfully", async ({ request }) => {
   const email = `register_${Date.now()}@test.com`;
 
-  const res = await request.post(`${BASE_URL}/users/register`, {
+  const res = await request.post(`${BASE_URL}${endpoints.register}`, {
     data: {
       name: "Tester",
       email,
-      password: "123321",
+      password,
     },
   });
 
@@ -56,8 +59,8 @@ test("should register a new user successfully", async ({ request }) => {
   expect(json.success).toBe(true);
   expect(json.data).toHaveProperty("id");
 
-  const login = await request.post(`${BASE_URL}/users/login`, {
-    data: { email, password: "123321" },
+  const login = await request.post(`${BASE_URL}${endpoints.login}`, {
+    data: { email, password },
   });
 
   const loginJson = await login.json();
@@ -67,10 +70,10 @@ test("should register a new user successfully", async ({ request }) => {
 });
 
 test("should fail when email is missing", async ({ request }) => {
-  const res = await request.post(`${BASE_URL}/users/register`, {
+  const res = await request.post(`${BASE_URL}${endpoints.register}`, {
     data: {
       name: "Tester",
-      password: "123321",
+      password,
     },
   });
 
@@ -82,7 +85,7 @@ test("should fail when email is missing", async ({ request }) => {
 });
 
 test("should fail when password is missing", async ({ request }) => {
-  const res = await request.post(`${BASE_URL}/users/register`, {
+  const res = await request.post(`${BASE_URL}${endpoints.register}`, {
     data: {
       name: "Tester",
       email: `missingpass_${Date.now()}@test.com`,
@@ -97,11 +100,11 @@ test("should fail when password is missing", async ({ request }) => {
 });
 
 test("should fail when email format is invalid", async ({ request }) => {
-  const res = await request.post(`${BASE_URL}/users/register`, {
+  const res = await request.post(`${BASE_URL}${endpoints.register}`, {
     data: {
       name: "Tester",
       email: "invalidemail",
-      password: "123321",
+      password,
     },
   });
 

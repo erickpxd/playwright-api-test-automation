@@ -1,11 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { getToken } from "../../utils/auth";
+import { getToken } from "../../framework/helpers/authHelper";
+import { env } from "../../config/environment";
+import { endpoints } from "../../config/endpoints";
 
-const BASE_URL = process.env.NOTES_URL;
+const BASE_URL = env.notesUrl;
 const token = getToken();
 
-test("Should return, user profile information retrieved successfully.", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/users/profile`, {
+test("Should return, user profile information retrieved successfully.", async ({
+  request,
+}) => {
+  const res = await request.get(`${BASE_URL}${endpoints.profile}`, {
     headers: { "x-auth-token": token },
   });
 
@@ -27,10 +31,12 @@ test("Should return, user profile information retrieved successfully.", async ({
   expect(typeof json.data.email).toBe("string");
 });
 
-test("Should return 401 Unauthorized when token is malformed", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/users/profile`, {
+test("Should return 401 Unauthorized when token is malformed", async ({
+  request,
+}) => {
+  const res = await request.get(`${BASE_URL}${endpoints.profile}`, {
     headers: {
-      "x-auth-token": "123-invalid-token"
+      "x-auth-token": "123-invalid-token",
     },
   });
 
@@ -39,16 +45,22 @@ test("Should return 401 Unauthorized when token is malformed", async ({ request 
   expect(res.status()).toBe(401);
   expect(json.success).toBe(false);
   expect(json.status).toBe(401);
-  expect(json.message).toBe("Access token is not valid or has expired, you will need to login");
+  expect(json.message).toBe(
+    "Access token is not valid or has expired, you will need to login"
+  );
 });
 
-test("Should return 401 Unauthorized when no token is provided", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/users/profile`);
+test("Should return 401 Unauthorized when no token is provided", async ({
+  request,
+}) => {
+  const res = await request.get(`${BASE_URL}${endpoints.profile}`);
 
   const json = await res.json();
 
   expect(res.status()).toBe(401);
   expect(json.success).toBe(false);
   expect(json.status).toBe(401);
-  expect(json.message).toBe("No authentication token specified in x-auth-token header");
+  expect(json.message).toBe(
+    "No authentication token specified in x-auth-token header"
+  );
 });
