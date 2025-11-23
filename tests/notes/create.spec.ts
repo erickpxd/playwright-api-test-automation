@@ -1,21 +1,23 @@
 import { test, expect } from "@playwright/test";
-import { getToken } from "../../utils/auth";
+import { getToken } from "../../framework/helpers/authHelper";
+import { env } from "../../config/environment";
+import { endpoints } from "../../config/endpoints";
 
-const BASE_URL = process.env.NOTES_URL;
+const BASE_URL = env.notesUrl;
 
 let testNoteId = "";
 const token = getToken();
 
 test.afterAll(async ({ request }) => {
   if (testNoteId) {
-    await request.delete(`${BASE_URL}/notes/${testNoteId}`, {
+    await request.delete(`${BASE_URL}${endpoints.noteById(testNoteId)}`, {
       headers: { "x-auth-token": token },
     });
   }
 });
 
 test("should create a note successfully", async ({ request }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "New note",
@@ -34,7 +36,7 @@ test("should create a note successfully", async ({ request }) => {
 });
 
 test("should fail to create note with missing title", async ({ request }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       description: "Testing note",
@@ -51,7 +53,7 @@ test("should fail to create note with missing title", async ({ request }) => {
 test("should fail to create note with missing description", async ({
   request,
 }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "New note",
@@ -68,7 +70,7 @@ test("should fail to create note with missing description", async ({
 test("should fail to create note with missing category", async ({
   request,
 }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "New note",
@@ -79,13 +81,15 @@ test("should fail to create note with missing category", async ({
   const json = await response.json();
 
   expect(response.status()).toBe(400);
-  expect(json.message).toContain("Category must be one of the categories:");
+  expect(json.message).toContain(
+    "Category must be one of the categories:"
+  );
 });
 
 test("should fail to create note with invalid category", async ({
   request,
 }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
     data: {
       title: "New note",
@@ -97,11 +101,13 @@ test("should fail to create note with invalid category", async ({
   const json = await response.json();
 
   expect(response.status()).toBe(400);
-  expect(json.message).toContain("Category must be one of the categories:");
+  expect(json.message).toContain(
+    "Category must be one of the categories:"
+  );
 });
 
 test("should fail to create note with missing token", async ({ request }) => {
-  const response = await request.post(`${BASE_URL}/notes`, {
+  const response = await request.post(`${BASE_URL}${endpoints.notes}`, {
     data: {
       title: "New note",
       description: "Testing note",

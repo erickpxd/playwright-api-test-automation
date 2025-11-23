@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { getToken } from "../../utils/auth";
+import { getToken } from "../../framework/helpers/authHelper";
+import { env } from "../../config/environment";
+import { endpoints } from "../../config/endpoints";
 
-const BASE_URL = process.env.NOTES_URL;
+const BASE_URL = env.notesUrl;
 const token = getToken();
 
 test("should list all notes successfully", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/notes`, {
+  const res = await request.get(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": token },
   });
 
@@ -31,7 +33,7 @@ test("should list all notes successfully", async ({ request }) => {
 });
 
 test("should fail to list notes without token", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/notes`);
+  const res = await request.get(`${BASE_URL}${endpoints.notes}`);
 
   expect(res.status()).toBe(401);
 
@@ -40,7 +42,7 @@ test("should fail to list notes without token", async ({ request }) => {
 });
 
 test("should fail to list notes with invalid token", async ({ request }) => {
-  const res = await request.get(`${BASE_URL}/notes`, {
+  const res = await request.get(`${BASE_URL}${endpoints.notes}`, {
     headers: { "x-auth-token": "123.invalid.token.456" },
   });
 
@@ -51,9 +53,8 @@ test("should fail to list notes with invalid token", async ({ request }) => {
   expect(json.success).toBe(false);
 
   if (json.message) {
-    expect(
-      json.message.toLowerCase()
-    ).toMatch("access token is not valid");
+    expect(json.message.toLowerCase()).toMatch(
+      "access token is not valid"
+    );
   }
 });
-
