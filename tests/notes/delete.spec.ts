@@ -3,28 +3,41 @@ import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
+import { Logger } from "../../framework/core/logger";
+import { LoggingHelper } from "../../framework/helpers/loggingHelper";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let client: APIRequestContext;
 let testNoteId = "";
+let logger: Logger;
+let loggingHelper: LoggingHelper;
 
 test.beforeAll(async () => {
   const manager = await RequestManager.getInstance();
   client = manager.client;
+  logger = Logger.getInstance();
+  loggingHelper = new LoggingHelper(logger);
 
-  const create = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      title: "Note to be deleted",
-      description: "This note will be deleted",
-      category: "Personal",
-    },
-  });
+  loggingHelper.logStep("Creating test note for deletion tests");
+  const create = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        title: "Note to be deleted",
+        description: "This note will be deleted",
+        category: "Personal",
+      },
+    }
+  );
 
   const json = await create.json();
   testNoteId = json.data.id;
+  loggingHelper.logStep("Test note created", { noteId: testNoteId });
 });
 
 test.afterAll(async () => {
@@ -36,8 +49,13 @@ test.afterAll(async () => {
 });
 
 test("should fail to delete a note without token", async () => {
-  const res = await client.delete(
-    `${BASE_URL}${endpoints.noteById(testNoteId)}`
+  loggingHelper.logStep("Attempting to delete note without authentication");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "DELETE",
+    `${BASE_URL}${endpoints.noteById(testNoteId)}`,
+    {}
   );
 
   expect(res.status()).toBe(401);
@@ -45,10 +63,15 @@ test("should fail to delete a note without token", async () => {
   const json = await res.json();
   expect(json.success).toBe(false);
   expect(json.message).toContain("No authentication token");
+  loggingHelper.logStep("Authentication error handled correctly");
 });
 
 test("should delete a note successfully", async () => {
-  const res = await client.delete(
+  loggingHelper.logStep("Deleting note", { noteId: testNoteId });
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "DELETE",
     `${BASE_URL}${endpoints.noteById(testNoteId)}`,
     {
       headers: { "x-auth-token": token },
@@ -62,10 +85,15 @@ test("should delete a note successfully", async () => {
   expect(json.message).toContain("Note successfully deleted");
 
   testNoteId = "";
+  loggingHelper.logStep("Note deleted successfully");
 });
 
 test("should fail to delete a note with invalid ID", async () => {
-  const res = await client.delete(
+  loggingHelper.logStep("Attempting to delete note with invalid ID");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "DELETE",
     `${BASE_URL}${endpoints.noteById("invalid-id")}`,
     {
       headers: { "x-auth-token": token },
@@ -76,4 +104,5 @@ test("should fail to delete a note with invalid ID", async () => {
 
   const json = await res.json();
   expect(json.success).toBe(false);
+  loggingHelper.logStep("Invalid ID error handled correctly");
 });

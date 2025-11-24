@@ -3,15 +3,21 @@ import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
+import { Logger } from "../../framework/core/logger";
+import { LoggingHelper } from "../../framework/helpers/loggingHelper";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let client: APIRequestContext;
+let logger: Logger;
+let loggingHelper: LoggingHelper;
 
 test.beforeAll(async () => {
   const manager = await RequestManager.getInstance();
   client = manager.client;
+  logger = Logger.getInstance();
+  loggingHelper = new LoggingHelper(logger);
 });
 
 test("Should update user profile successfully (200)", async () => {
@@ -20,6 +26,8 @@ test("Should update user profile successfully (200)", async () => {
     phone: "9876543210",
     company: "QA3 Company",
   };
+
+  loggingHelper.logStep("Updating user profile", payload);
 
   const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     headers: { "x-auth-token": token },
@@ -42,9 +50,13 @@ test("Should update user profile successfully (200)", async () => {
   expect(json.data.name).toBe(payload.name);
   expect(json.data.phone).toBe(payload.phone);
   expect(json.data.company).toBe(payload.company);
+
+  loggingHelper.logStep("Profile updated successfully");
 });
 
 test("Should return 400 Bad Request when invalid data is sent", async () => {
+  loggingHelper.logStep("Attempting to update profile with invalid data");
+
   const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     headers: { "x-auth-token": token },
     form: {
@@ -62,9 +74,13 @@ test("Should return 400 Bad Request when invalid data is sent", async () => {
 
   expect(typeof json.message).toBe("string");
   expect(json.message.length).toBeGreaterThan(0);
+
+  loggingHelper.logStep("Invalid data error handled correctly");
 });
 
 test("Should return 401 Unauthorized when no token is provided", async () => {
+  loggingHelper.logStep("Attempting to update profile without token");
+
   const res = await client.patch(`${BASE_URL}${endpoints.profileUpdate}`, {
     form: {
       name: "User",
@@ -81,4 +97,6 @@ test("Should return 401 Unauthorized when no token is provided", async () => {
   expect(json.message).toBe(
     "No authentication token specified in x-auth-token header"
   );
+
+  loggingHelper.logStep("Missing token error handled correctly");
 });

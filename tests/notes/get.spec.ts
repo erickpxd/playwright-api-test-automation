@@ -3,21 +3,34 @@ import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
+import { Logger } from "../../framework/core/logger";
+import { LoggingHelper } from "../../framework/helpers/loggingHelper";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let client: APIRequestContext;
+let logger: Logger;
+let loggingHelper: LoggingHelper;
 
 test.beforeAll(async () => {
   const manager = await RequestManager.getInstance();
   client = manager.client;
+  logger = Logger.getInstance();
+  loggingHelper = new LoggingHelper(logger);
 });
 
 test("should list all notes successfully", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-  });
+  loggingHelper.logStep("Retrieving all notes");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+    }
+  );
 
   expect(res.status()).toBe(200);
 
@@ -38,21 +51,38 @@ test("should list all notes successfully", async () => {
     expect(typeof first.description).toBe("string");
     expect(typeof first.category).toBe("string");
   }
+
+  loggingHelper.logStep("Notes retrieved successfully", { count: json.data.length });
 });
 
 test("should fail to list notes without token", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.notes}`);
+  loggingHelper.logStep("Attempting to retrieve notes without authentication");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.notes}`,
+    {}
+  );
 
   expect(res.status()).toBe(401);
 
   const json = await res.json();
   expect(json.success).toBe(false);
+  loggingHelper.logStep("Authentication error handled correctly");
 });
 
 test("should fail to list notes with invalid token", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": "123.invalid.token.456" },
-  });
+  loggingHelper.logStep("Attempting to retrieve notes with invalid token");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": "123.invalid.token.456" },
+    }
+  );
 
   expect(res.status()).toBe(401);
 
@@ -65,4 +95,5 @@ test("should fail to list notes with invalid token", async () => {
       "access token is not valid"
     );
   }
+  loggingHelper.logStep("Invalid token error handled correctly");
 });

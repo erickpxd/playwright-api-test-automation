@@ -3,16 +3,22 @@ import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
+import { Logger } from "../../framework/core/logger";
+import { LoggingHelper } from "../../framework/helpers/loggingHelper";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let client: APIRequestContext;
 let testNoteId = "";
+let logger: Logger;
+let loggingHelper: LoggingHelper;
 
 test.beforeAll(async () => {
   const manager = await RequestManager.getInstance();
   client = manager.client;
+  logger = Logger.getInstance();
+  loggingHelper = new LoggingHelper(logger);
 });
 
 test.afterAll(async () => {
@@ -24,14 +30,21 @@ test.afterAll(async () => {
 });
 
 test("should create a note successfully", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      title: "New note",
-      description: "Testing note",
-      category: "Personal",
-    },
-  });
+  loggingHelper.logStep("Creating a new note");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        title: "New note",
+        description: "Testing note",
+        category: "Personal",
+      },
+    }
+  );
 
   const json = await response.json();
 
@@ -40,46 +53,70 @@ test("should create a note successfully", async () => {
   expect(response.headers()["content-type"]).toContain("application/json");
 
   testNoteId = json.data.id;
+  loggingHelper.logStep("Note created successfully", { noteId: testNoteId });
 });
 
 test("should fail to create note with missing title", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      description: "Testing note",
-      category: "Personal",
-    },
-  });
+  loggingHelper.logStep("Attempting to create note without title");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        description: "Testing note",
+        category: "Personal",
+      },
+    }
+  );
 
   const json = await response.json();
 
   expect(response.status()).toBe(400);
   expect(json.message).toContain("Title must be between");
+  loggingHelper.logStep("Validation error handled correctly");
 });
 
 test("should fail to create note with missing description", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      title: "New note",
-      category: "Personal",
-    },
-  });
+  loggingHelper.logStep("Attempting to create note without description");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        title: "New note",
+        category: "Personal",
+      },
+    }
+  );
 
   const json = await response.json();
 
   expect(response.status()).toBe(400);
   expect(json.message).toContain("Description must be between");
+  loggingHelper.logStep("Validation error handled correctly");
 });
 
 test("should fail to create note with missing category", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      title: "New note",
-      description: "Testing note",
-    },
-  });
+  loggingHelper.logStep("Attempting to create note without category");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        title: "New note",
+        description: "Testing note",
+      },
+    }
+  );
 
   const json = await response.json();
 
@@ -87,17 +124,25 @@ test("should fail to create note with missing category", async () => {
   expect(json.message).toContain(
     "Category must be one of the categories:"
   );
+  loggingHelper.logStep("Validation error handled correctly");
 });
 
 test("should fail to create note with invalid category", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    headers: { "x-auth-token": token },
-    data: {
-      title: "New note",
-      description: "Testing note",
-      category: "Electronic",
-    },
-  });
+  loggingHelper.logStep("Attempting to create note with invalid category");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      headers: { "x-auth-token": token },
+      data: {
+        title: "New note",
+        description: "Testing note",
+        category: "Electronic",
+      },
+    }
+  );
 
   const json = await response.json();
 
@@ -105,19 +150,28 @@ test("should fail to create note with invalid category", async () => {
   expect(json.message).toContain(
     "Category must be one of the categories:"
   );
+  loggingHelper.logStep("Validation error handled correctly");
 });
 
 test("should fail to create note with missing token", async () => {
-  const response = await client.post(`${BASE_URL}${endpoints.notes}`, {
-    data: {
-      title: "New note",
-      description: "Testing note",
-      category: "Personal",
-    },
-  });
+  loggingHelper.logStep("Attempting to create note without authentication token");
+
+  const response = await loggingHelper.makeRequest(
+    client,
+    "POST",
+    `${BASE_URL}${endpoints.notes}`,
+    {
+      data: {
+        title: "New note",
+        description: "Testing note",
+        category: "Personal",
+      },
+    }
+  );
 
   const json = await response.json();
 
   expect(response.status()).toBe(401);
   expect(json.message).toContain("No authentication token");
+  loggingHelper.logStep("Authentication error handled correctly");
 });
