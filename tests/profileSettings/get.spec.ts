@@ -3,21 +3,34 @@ import { getToken } from "../../framework/helpers/authHelper";
 import { env } from "../../config/environment";
 import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
+import { Logger } from "../../framework/core/logger";
+import { LoggingHelper } from "../../framework/helpers/loggingHelper";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
 
 let client: APIRequestContext;
+let logger: Logger;
+let loggingHelper: LoggingHelper;
 
 test.beforeAll(async () => {
   const manager = await RequestManager.getInstance();
   client = manager.client;
+  logger = Logger.getInstance();
+  loggingHelper = new LoggingHelper(logger);
 });
 
 test("Should return, user profile information retrieved successfully.", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.profile}`, {
-    headers: { "x-auth-token": token },
-  });
+  loggingHelper.logStep("Retrieving user profile");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.profile}`,
+    {
+      headers: { "x-auth-token": token },
+    }
+  );
 
   const json = await res.json();
 
@@ -35,14 +48,23 @@ test("Should return, user profile information retrieved successfully.", async ()
   expect(typeof json.data.id).toBe("string");
   expect(typeof json.data.name).toBe("string");
   expect(typeof json.data.email).toBe("string");
+
+  loggingHelper.logStep("Profile retrieved successfully");
 });
 
 test("Should return 401 Unauthorized when token is malformed", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.profile}`, {
-    headers: {
-      "x-auth-token": "123-invalid-token",
-    },
-  });
+  loggingHelper.logStep("Attempting to retrieve profile with malformed token");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.profile}`,
+    {
+      headers: {
+        "x-auth-token": "123-invalid-token",
+      },
+    }
+  );
 
   const json = await res.json();
 
@@ -52,10 +74,19 @@ test("Should return 401 Unauthorized when token is malformed", async () => {
   expect(json.message).toBe(
     "Access token is not valid or has expired, you will need to login"
   );
+
+  loggingHelper.logStep("Malformed token error handled correctly");
 });
 
 test("Should return 401 Unauthorized when no token is provided", async () => {
-  const res = await client.get(`${BASE_URL}${endpoints.profile}`);
+  loggingHelper.logStep("Attempting to retrieve profile without token");
+
+  const res = await loggingHelper.makeRequest(
+    client,
+    "GET",
+    `${BASE_URL}${endpoints.profile}`,
+    {}
+  );
 
   const json = await res.json();
 
@@ -65,4 +96,6 @@ test("Should return 401 Unauthorized when no token is provided", async () => {
   expect(json.message).toBe(
     "No authentication token specified in x-auth-token header"
   );
+
+  loggingHelper.logStep("Missing token error handled correctly");
 });
