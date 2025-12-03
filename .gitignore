@@ -9,3 +9,4 @@ node_modules/
 auth.json
 /test-logs/
 /reports/
+/coverage/

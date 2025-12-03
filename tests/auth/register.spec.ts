@@ -4,6 +4,8 @@ import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
 import { Logger } from "../../framework/core/logger";
 import { LoggingHelper } from "../../framework/helpers/loggingHelper";
+import { validateResponse } from "../../framework/helpers/schemaValidator";
+import { registerResponseSchema } from "../schemas/authSchemas";
 
 const BASE_URL = env.notesUrl;
 const password = env.testPassword;
@@ -87,6 +89,7 @@ test.describe("Auth | Register", () => {
       expect(res.status()).toBe(201);
 
       const json = await res.json();
+      validateResponse(registerResponseSchema, json);
       expect(json.success).toBe(true);
       expect(json.data).toHaveProperty("id");
 
