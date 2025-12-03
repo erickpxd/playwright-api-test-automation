@@ -1,5 +1,4 @@
-
-# Playwright
+package-lock.json
 node_modules/
 /test-results/
 /playwright-report/
@@ -8,3 +7,4 @@ node_modules/
 /playwright/.auth/
 auth.json
 /test-logs/
+/reports/

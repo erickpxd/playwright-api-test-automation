@@ -17,7 +17,8 @@ export default [
       ...js.configs.recommended.rules,
       ...ts.configs.recommended.rules,
 
-      "no-unused-vars": "warn",
+      // Use the TS-aware rule to avoid falsos positivos em enums/assinaturas de tipos
+      "no-unused-vars": "off",
       "no-undef": "off",
       "no-console": "off",
 
