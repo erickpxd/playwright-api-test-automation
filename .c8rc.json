@@ -1,0 +1,18 @@
+{
+  "reporter": ["text-summary", "lcov"],
+  "extension": [".ts"],
+  "all": true,
+  "include": [
+    "config/**/*.ts",
+    "framework/**/*.ts",
+    "tests/**/*.ts",
+    "globalSetup.ts",
+    "globalTeardown.ts"
+  ],
+  "exclude": [
+    "node_modules/**",
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**"
+  ]
+}
