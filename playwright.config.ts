@@ -17,6 +17,8 @@ export default defineConfig({
   globalSetup: "./globalSetup.ts",
   globalTeardown: "./globalTeardown.ts",
 
+  maxFailures: process.env.FAIL_FAST === "1" ? 1 : undefined,
+
   use: {
     baseURL: process.env.API_URL,
     ignoreHTTPSErrors: true,

@@ -5,6 +5,8 @@ import { endpoints } from "../../config/endpoints";
 import { RequestManager } from "../../framework/core/requestManager";
 import { Logger } from "../../framework/core/logger";
 import { LoggingHelper } from "../../framework/helpers/loggingHelper";
+import { validateResponse } from "../../framework/helpers/schemaValidator";
+import { listNotesResponseSchema } from "../schemas/noteSchemas";
 
 const BASE_URL = env.notesUrl;
 const token = getToken();
@@ -37,6 +39,7 @@ test.describe("Notes | Get", () => {
       expect(res.status()).toBe(200);
 
       const json = await res.json();
+      validateResponse(listNotesResponseSchema, json);
       expect(json.success).toBe(true);
       expect(Array.isArray(json.data)).toBe(true);
 
