@@ -1,93 +1,193 @@
-# qa3-project
+# QA3 API Test Automation
 
+Framework de automação de testes para a API pública [Notes API](https://practice.expandtesting.com/notes/api), desenvolvido com Playwright, TypeScript e Node.js.
 
+O projeto cobre os fluxos de autenticação, gerenciamento de notas e perfil do usuário. Além dos testes funcionais, inclui cenários E2E, testes unitários do framework, validação de contratos JSON, métricas de desempenho, cobertura e geração de relatórios.
 
-## Getting started
+## Tecnologias
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- Node.js e npm
+- TypeScript
+- Playwright Test
+- ESLint
+- AJV para validação de schemas
+- C8 para cobertura
+- GitLab CI/CD
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Cobertura dos testes
 
-## Add your files
+| Área | Cenários |
+| --- | --- |
+| Autenticação | Registro, login e exclusão de conta |
+| Notas | Criação, consulta, atualização e exclusão |
+| Perfil | Consulta e atualização de dados |
+| E2E | Ciclo completo de autenticação e gerenciamento de notas |
+| Performance | Tempo de resposta e percentil 95 do login |
+| Framework | Ciclo de vida e comportamento singleton do `RequestManager` |
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+Os testes funcionais são classificados como `Smoke` ou `Regression`, permitindo executar somente o conjunto necessário.
 
+## Estrutura do projeto
+
+```text
+.
+├── config/                 # Ambiente e endpoints da API
+├── docs/                   # Documentação complementar do framework
+├── framework/
+│   ├── core/               # RequestManager, Logger e contexto dos testes
+│   ├── helpers/            # Autenticação, logs, schemas e performance
+│   └── reporters/          # Relatório de status por área
+├── tests/
+│   ├── auth/               # Testes de autenticação
+│   ├── e2e/                # Fluxos completos da API
+│   ├── notes/              # Testes CRUD de notas
+│   ├── performance/        # Testes de desempenho
+│   ├── profileSettings/    # Testes de perfil
+│   ├── schemas/            # Contratos JSON
+│   └── unit/               # Testes unitários do framework
+├── globalSetup.ts          # Autenticação antes da suíte
+├── globalTeardown.ts       # Liberação dos recursos
+├── playwright.config.ts    # Configuração do Playwright
+└── .gitlab-ci.yml          # Pipeline de lint e testes
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/qa3-jala/qa3-project.git
-git branch -M main
-git push -uf origin main
+
+Uma descrição mais detalhada dos componentes está disponível em [docs/README.md](docs/README.md).
+
+## Pré-requisitos
+
+- Node.js 20 ou superior
+- npm
+- Acesso à internet para consumir a Notes API
+- Um usuário válido cadastrado na API para o setup global
+
+## Instalação
+
+Clone o repositório e instale as dependências exatamente como registradas no lockfile:
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd qa3-project
+npm ci
 ```
 
-## Integrate with your tools
+Como os testes utilizam o contexto de requisições HTTP do Playwright, não é necessário instalar navegadores.
 
-- [ ] [Set up project integrations](https://gitlab.com/qa3-jala/qa3-project/-/settings/integrations)
+## Configuração
 
-## Collaborate with your team
+Crie ou atualize o arquivo `.env.test` na raiz do projeto:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+```dotenv
+NOTES_URL=https://practice.expandtesting.com/notes/api
+API_URL=https://practice.expandtesting.com/notes/api
+TEST_EMAIL=usuario_de_teste@example.com
+TEST_PASSWORD=senha_do_usuario
+```
 
-## Test and Deploy
+| Variável | Obrigatória | Descrição |
+| --- | --- | --- |
+| `NOTES_URL` | Sim | URL base usada pelo `RequestManager` e pelos helpers |
+| `TEST_EMAIL` | Sim | E-mail utilizado pelo setup global |
+| `TEST_PASSWORD` | Sim | Senha utilizada pelo setup e pelos testes |
+| `API_URL` | Não | URL base disponibilizada pela configuração do Playwright |
+| `TEST_SUITE` | Não | Filtra a execução por `smoke` ou `regression` |
+| `FAIL_FAST` | Não | Use `1` para interromper após a primeira falha |
 
-Use the built-in continuous integration in GitLab.
+O setup global autentica o usuário e grava temporariamente o token em `auth.json`. Esse arquivo, os logs e os relatórios são ignorados pelo Git.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Execução
 
-***
+Executar toda a suíte:
 
-# Editing this README
+```bash
+npm test
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Executar somente os testes Smoke:
 
-## Suggestions for a good README
+```bash
+TEST_SUITE=smoke npm test
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Executar somente os testes de regressão:
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+TEST_SUITE=regression npm test
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Executar um arquivo específico:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+npx playwright test tests/auth/login.spec.ts
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Interromper a suíte na primeira falha:
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+```bash
+FAIL_FAST=1 npm test
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Executar lint:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+npm run lint
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Executar testes com cobertura:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+npm run test:coverage
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Teste de performance
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+O cenário de login mede múltiplas requisições, calcula média, mínimo, máximo, p50 e p95 e valida o p95 contra um SLA configurável.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```bash
+PERF_LOGIN_ITERATIONS=20 \
+PERF_LOGIN_WARMUP=2 \
+PERF_LOGIN_P95_MS=400 \
+PERF_LOGIN_STRICT=true \
+npx playwright test tests/performance/login.perf.spec.ts
+```
 
-## License
-For open source projects, say how it is licensed.
+| Variável | Padrão | Descrição |
+| --- | --- | --- |
+| `PERF_LOGIN_ITERATIONS` | `20` | Número de medições consideradas |
+| `PERF_LOGIN_WARMUP` | `2` | Requisições de aquecimento descartadas |
+| `PERF_LOGIN_P95_MS` | `400` | SLA máximo do p95 em milissegundos |
+| `PERF_LOGIN_STRICT` | `true` | Falha o teste quando o SLA é ultrapassado |
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## Relatórios
+
+Cada execução pode gerar:
+
+- `playwright-report/`: relatório HTML do Playwright;
+- `reports/status-report.json`: resultado estruturado por área;
+- `reports/status-report.md`: resumo legível com sugestões;
+- `test-logs/`: logs de passos, requisições e respostas;
+- `coverage/`: cobertura gerada pelo C8.
+
+Para abrir o relatório HTML:
+
+```bash
+npx playwright show-report
+```
+
+## Pipeline
+
+A pipeline do GitLab utiliza a imagem oficial do Playwright e possui dois jobs:
+
+1. `lint`: valida os arquivos TypeScript com ESLint;
+2. `tests`: executa a suíte e mantém relatórios e resultados como artefatos por uma semana.
+
+Localmente, os mesmos checks podem ser reproduzidos com:
+
+```bash
+npm ci
+npm run lint
+npm test -- --reporter=list
+```
+
+## Autor
+
+Desenvolvido por Erick Monteiro (`erickpxd`).
