@@ -1,5 +1,7 @@
 # QA3 API Test Automation
 
+[![CI](https://github.com/erickpxd/playwright-api-test-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/erickpxd/playwright-api-test-automation/actions/workflows/ci.yml)
+
 Framework de automação de testes para a API pública [Notes API](https://practice.expandtesting.com/notes/api), desenvolvido com Playwright, TypeScript e Node.js.
 
 O projeto cobre os fluxos de autenticação, gerenciamento de notas e perfil do usuário. Além dos testes funcionais, inclui cenários E2E, testes unitários do framework, validação de contratos JSON, métricas de desempenho, cobertura e geração de relatórios.
@@ -12,7 +14,7 @@ O projeto cobre os fluxos de autenticação, gerenciamento de notas e perfil do 
 - ESLint
 - AJV para validação de schemas
 - C8 para cobertura
-- GitLab CI/CD
+- GitHub Actions
 
 ## Cobertura dos testes
 
@@ -45,10 +47,10 @@ Os testes funcionais são classificados como `Smoke` ou `Regression`, permitindo
 │   ├── profileSettings/    # Testes de perfil
 │   ├── schemas/            # Contratos JSON
 │   └── unit/               # Testes unitários do framework
+├── .github/workflows/      # Pipeline de integração contínua
 ├── globalSetup.ts          # Autenticação antes da suíte
 ├── globalTeardown.ts       # Liberação dos recursos
-├── playwright.config.ts    # Configuração do Playwright
-└── .gitlab-ci.yml          # Pipeline de lint e testes
+└── playwright.config.ts    # Configuração do Playwright
 ```
 
 Uma descrição mais detalhada dos componentes está disponível em [docs/README.md](docs/README.md).
@@ -65,8 +67,8 @@ Uma descrição mais detalhada dos componentes está disponível em [docs/README
 Clone o repositório e instale as dependências exatamente como registradas no lockfile:
 
 ```bash
-git clone <URL_DO_REPOSITORIO>
-cd qa3-project
+git clone https://github.com/erickpxd/playwright-api-test-automation.git
+cd playwright-api-test-automation
 npm ci
 ```
 
@@ -74,7 +76,13 @@ Como os testes utilizam o contexto de requisições HTTP do Playwright, não é 
 
 ## Configuração
 
-Crie ou atualize o arquivo `.env.test` na raiz do projeto:
+Copie o arquivo de exemplo e preencha as credenciais do usuário de teste:
+
+```bash
+cp .env.example .env.test
+```
+
+O arquivo deve conter:
 
 ```dotenv
 NOTES_URL=https://practice.expandtesting.com/notes/api
@@ -92,7 +100,7 @@ TEST_PASSWORD=senha_do_usuario
 | `TEST_SUITE` | Não | Filtra a execução por `smoke` ou `regression` |
 | `FAIL_FAST` | Não | Use `1` para interromper após a primeira falha |
 
-O setup global autentica o usuário e grava temporariamente o token em `auth.json`. Esse arquivo, os logs e os relatórios são ignorados pelo Git.
+O setup global autentica o usuário e grava temporariamente o token em `auth.json`. O `.env.test`, esse token, os logs e os relatórios são ignorados pelo Git.
 
 ## Execução
 
@@ -175,10 +183,9 @@ npx playwright show-report
 
 ## Pipeline
 
-A pipeline do GitLab utiliza a imagem oficial do Playwright e possui dois jobs:
+O GitHub Actions instala as dependências com `npm ci`, valida os arquivos TypeScript com ESLint e executa a suíte de API. Relatórios e resultados são mantidos como artefatos por sete dias.
 
-1. `lint`: valida os arquivos TypeScript com ESLint;
-2. `tests`: executa a suíte e mantém relatórios e resultados como artefatos por uma semana.
+Para habilitar os testes de API na pipeline, cadastre `TEST_EMAIL` e `TEST_PASSWORD` em **Settings > Secrets and variables > Actions**. Sem esses secrets, o lint continua sendo executado e os testes externos são ignorados com um aviso.
 
 Localmente, os mesmos checks podem ser reproduzidos com:
 

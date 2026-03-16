@@ -1,7 +1,7 @@
 {
-  "name": "qa3-project",
+  "name": "playwright-api-test-automation",
   "version": "1.0.0",
-  "description": "",
+  "description": "API test automation framework built with Playwright and TypeScript",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@gitlab.com/qa3-jala/qa3-project.git"
+    "url": "git+https://github.com/erickpxd/playwright-api-test-automation.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Erick Monteiro",
   "license": "ISC",
   "bugs": {
-    "url": "https://gitlab.com/qa3-jala/qa3-project/issues"
+    "url": "https://github.com/erickpxd/playwright-api-test-automation/issues"
   },
-  "homepage": "https://gitlab.com/qa3-jala/qa3-project#readme",
+  "homepage": "https://github.com/erickpxd/playwright-api-test-automation#readme",
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.10.1",

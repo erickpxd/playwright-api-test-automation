@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NOTES_URL: https://practice.expandtesting.com/notes/api
+      API_URL: https://practice.expandtesting.com/notes/api
+      TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+      TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run Playwright API tests
+        if: env.TEST_EMAIL != '' && env.TEST_PASSWORD != ''
+        run: |
+          mkdir -p reports
+          npm test -- --reporter=list
+
+      - name: Report missing test credentials
+        if: env.TEST_EMAIL == '' || env.TEST_PASSWORD == ''
+        run: echo "::warning::API tests were skipped. Configure TEST_EMAIL and TEST_PASSWORD as repository secrets."
+
+      - name: Upload test artifacts
+        if: always() && env.TEST_EMAIL != '' && env.TEST_PASSWORD != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            reports/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
